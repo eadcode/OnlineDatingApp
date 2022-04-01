@@ -34,7 +34,7 @@ module.exports = function () {
                     fullname: profile.displayName,
                     firstname: profile.name.givenName,
                     lastname: profile.name.familyName,
-                    image: `https://graph.facebook.com/${profile.id}/picture?size=large`,
+                    image: `https://graph.facebook.com/${profile.id}/picture?type=large`,
                     email: profile.emails[0].value,
                 }
 
