@@ -17,9 +17,13 @@
             </h1>
 
             <p class="center">or</p>
-            <form action="/login">
+            <form method="POST" action="/login">
                 {{#each success}}
                     <div class="green">{{text}}</div>
+                {{/each}}
+
+                {{#each errors}}
+                    <div class="red">{{text}}</div>
                 {{/each}}
                 <div class="form-group">
                     <label for="email">Email</label>

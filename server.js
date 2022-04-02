@@ -47,6 +47,7 @@ app.use((req, res, next) => {
 
 require('./passport/facebook');
 require('./passport/google');
+require('./passport/local');
 
 app.engine('handlebars', engine({ defaultLayout: 'main' }));
 app.set('view engine', 'handlebars');
@@ -203,6 +204,19 @@ app.post('/signup', (req, res) => {
             }
         })
     }
+});
+
+app.post('/login', passport.authenticate('local', {
+    successRedirect: '/profile',
+    failureRedirect: '/loginErrors',
+}));
+
+app.get('/loginErrors', (req, res) => {
+    let errors = [];
+    errors.push({ text: 'User not found or password incorrect' })
+    res.render('home', {
+        errors: errors
+    });
 });
 
 app.get('/logout', (req, res) => {
