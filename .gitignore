@@ -102,4 +102,3 @@ web_modules/
 .vscode-test
 
 dev.js
-prod.js
