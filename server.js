@@ -7,7 +7,9 @@ const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const flash = require('connect-flash');
 
+const Handlebars = require('handlebars')
 const { engine } = require('express-handlebars');
+const {allowInsecurePrototypeAccess} = require('@handlebars/allow-prototype-access')
 
 const Message = require('./models/message');
 const User = require('./models/user');
@@ -50,7 +52,10 @@ require('./passport/facebook');
 require('./passport/google');
 require('./passport/local');
 
-app.engine('handlebars', engine({ defaultLayout: 'main' }));
+app.engine('handlebars', engine({
+    defaultLayout: 'main',
+    handlebars: allowInsecurePrototypeAccess(Handlebars)
+}));
 app.set('view engine', 'handlebars');
 app.set('views', './views');
 
@@ -66,7 +71,7 @@ app.get('/about', ensureGuest, (req, res) => {
     });
 });
 
-app.get('/contact', (req, res) => {
+app.get('/contact', ensureGuest, (req, res) => {
     res.render('contact', {
         title: 'Contact',
     });
@@ -143,7 +148,7 @@ app.get('/newAccount', (req, res) => {
     });
 });
 
-app.post('/updateProfile', (req, res) => {
+app.post('/updateProfile', requireLogin, (req, res) => {
     User.findById({ _id: req.user._id }).then((user) => {
         user.fullname = req.body.fullname;
         user.email = req.body.email;
@@ -160,13 +165,38 @@ app.post('/updateProfile', (req, res) => {
     });
 });
 
-app.get('/askToDelete', (req, res) => {
+app.get('/singles', requireLogin, (req, res) => {
+    User.find({})
+        .sort({ date: 'desc' })
+        .then((singles) => {
+            console.log(singles)
+            res.render('singles', {
+                title: 'Singles',
+                singles: singles,
+            })
+        })
+        .catch((err) => {
+            console.log(err);
+        });
+});
+
+app.get('/userProfile/:id', (req, res) => {
+    User.findById({ _id: req.params.id })
+        .then((user) => {
+        res.render('userProfile', {
+            title: 'Profile',
+            oneUser: user
+        })
+    });
+})
+
+app.get('/askToDelete', requireLogin, (req, res) => {
     res.render('askToDelete', {
         title: 'Delete',
     });
 });
 
-app.get('/deleteAccount', (req, res) => {
+app.get('/deleteAccount', requireLogin, (req, res) => {
     User.deleteOne({ _id: req.user._id }).then(() => {
         res.render('accountDeleted', {
             title: 'Deleted',

@@ -1,0 +1,25 @@
+{{#each singles}}
+    {{#if online}}
+        <a href="/userProfile/{{_id}}">
+            <div class="row">
+                <div class="col">
+                    <img src="{{image}}" class="rounded-circle" width="64px">
+                    <br>
+                    <i class="fa fa-circle green"> online</i>
+                </div>
+            </div>
+        </a>
+    {{else}}
+        <a href="/userProfile/{{_id}}">
+            <div class="row">
+                <div class="col">
+                    <img src="{{image}}" class="rounded-image" width="64px">
+                    <br>
+                    <i class="fa fa-circle red"> offline</i>
+                </div>
+            </div>
+        </a>
+    {{/if}}
+{{else}}
+    <p>No user found</p>
+{{/each}}

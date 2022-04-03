@@ -9,3 +9,13 @@
 .red {
     color: red;
 }
+
+.fa-edit {
+    cursor: pointer;
+    color: blue;
+    margin-right: 10px;
+}
+
+a:visited {
+    color: red;
+}
