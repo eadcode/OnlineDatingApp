@@ -1,25 +1,39 @@
 <div class="container-fluid">
     {{#each singles}}
         {{#if online}}
-            <a href="/userProfile/{{_id}}">
-                <div class="row">
-                    <div class="col-sm-3">
-                        <img src="{{image}}" class="rounded-circle" width="64px">
-                        <br>
-                        <i class="fa fa-circle green"> online</i>
-                    </div>
+            <div class="row">
+                <div class="col-sm-3">
+                    <img src="{{image}}" class="img-fluid">
+                    <br>
+                    <h4 class="singles-icons">
+                        <a href="/userProfile/{{_id}}">
+                            <button class="btn btn-outline-primary"><i class="fa fa-address-book"></i></button>
+                        </a>
+                        <a href="/startChat/{{_id}}">
+                            <button class="btn btn-outline-info"><i class="fas fa-comments"></i></button>
+                        </a>
+
+                        <i class="fa fa-circle green right"> ONLINE</i>
+                    </h4>
                 </div>
-            </a>
+            </div>
         {{else}}
-            <a href="/userProfile/{{_id}}">
-                <div class="row">
-                    <div class="col-sm-3">
-                        <img src="{{image}}" class="rounded-circle" width="64px">
-                        <br>
-                        <i class="fa fa-circle red"> offline</i>
-                    </div>
+            <div class="row">
+                <div class="col-sm-3">
+                    <img src="{{image}}" class="img-fluid">
+                    <br>
+                    <h4 class="singles-icons">
+                        <a href="/userProfile/{{_id}}">
+                            <button class="btn btn-outline-primary"><i class="fa fa-address-book"></i></button>
+                        </a>
+                        <a href="/startChat/{{_id}}">
+                            <button class="btn btn-outline-info"><i class="fas fa-comments"></i></button>
+                        </a>
+
+                        <i class="fa fa-circle red right"> OFFLINE</i>
+                    </h4>
                 </div>
-            </a>
+            </div>
         {{/if}}
     {{else}}
         <p>No user found</p>
