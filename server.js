@@ -1,7 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const passport = require('passport');
-const bcrypt =require('bcryptjs');
+const bcrypt = require('bcryptjs');
+const multer = require('multer');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const flash = require('connect-flash');
@@ -72,7 +73,6 @@ app.get('/contact', (req, res) => {
 });
 
 app.post('/contactUs', (req, res) => {
-    console.log(req.body);
     const newMessage = {
         fullname: req.body.fullname,
         email: req.body.email,
@@ -129,7 +129,7 @@ app.get('/profile', requireLogin, (req, res) => {
                 } else {
                     res.render('profile', {
                         title: 'Profile',
-                        user: user,
+                        user: user.toObject(),
                     });
                 }
             });
@@ -143,8 +143,39 @@ app.get('/newAccount', (req, res) => {
     });
 });
 
+app.post('/updateProfile', (req, res) => {
+    User.findById({ _id: req.user._id }).then((user) => {
+        user.fullname = req.body.fullname;
+        user.email = req.body.email;
+        user.gender = req.body.gender;
+        user.about = req.body.about;
+
+        user.save((err, user) => {
+            if (err) {
+                throw err;
+            } else {
+                res.redirect('/profile');
+            }
+        });
+    });
+});
+
+app.get('/askToDelete', (req, res) => {
+    res.render('askToDelete', {
+        title: 'Delete',
+    });
+});
+
+app.get('/deleteAccount', (req, res) => {
+    User.deleteOne({ _id: req.user._id }).then(() => {
+        res.render('accountDeleted', {
+            title: 'Deleted',
+        });
+    });
+    req.logout();
+});
+
 app.post('/signup', (req, res) => {
-    console.log(req.body);
     let errors = [];
 
     if (req.body.password !== req.body.password2) {
@@ -167,42 +198,42 @@ app.post('/signup', (req, res) => {
     } else {
         User.findOne({ email: req.body.email })
             .then((user) => {
-            if (user) {
-                let errors = [];
-                errors.push({ text: 'Email already exist'})
-                res.render('newAccount', {
-                    title: 'Signup',
-                    errors: errors,
-                });
-            } else {
-                const salt = bcrypt.genSaltSync(10);
-                const hash = bcrypt.hashSync(req.body.password, salt);
+                if (user) {
+                    let errors = [];
+                    errors.push({ text: 'Email already exist' });
+                    res.render('newAccount', {
+                        title: 'Signup',
+                        errors: errors,
+                    });
+                } else {
+                    const salt = bcrypt.genSaltSync(10);
+                    const hash = bcrypt.hashSync(req.body.password, salt);
 
-                const newUser = {
-                    fullname: req.body.username,
-                    email: req.body.email,
-                    password: hash
+                    const newUser = {
+                        fullname: req.body.username,
+                        email: req.body.email,
+                        password: hash,
+                    };
+
+                    new User(newUser).save((err, user) => {
+                        if (err) {
+                            throw err;
+                        }
+
+                        if (user) {
+                            let success = [];
+                            success.push({
+                                text: 'You successfully created account. You can login now',
+                            });
+
+                            res.render('home', {
+                                success: success,
+                            });
+                        }
+                    });
+
                 }
-
-                new User(newUser).save((err, user) => {
-                    if (err) {
-                        throw err;
-                    }
-
-                    if (user) {
-                        let success = [];
-                        success.push({
-                            text: 'You successfully created account. You can login now'
-                        })
-
-                        res.render('home', {
-                            success: success
-                        });
-                    }
-                });
-
-            }
-        })
+            });
     }
 });
 
@@ -213,9 +244,9 @@ app.post('/login', passport.authenticate('local', {
 
 app.get('/loginErrors', (req, res) => {
     let errors = [];
-    errors.push({ text: 'User not found or password incorrect' })
+    errors.push({ text: 'User not found or password incorrect' });
     res.render('home', {
-        errors: errors
+        errors: errors,
     });
 });
 

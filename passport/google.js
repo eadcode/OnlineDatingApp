@@ -3,17 +3,12 @@ const GoogleStrategy = require('passport-google-oauth2').Strategy;
 const User = require('../models/user');
 const Keys = require('../config/keys');
 
-
 passport.use(new GoogleStrategy({
-        // consumerKey: Keys.GoogleClientID,
-        // consumerSecret: Keys.GoogleClientSecret,
         clientID: Keys.GoogleClientID,
         clientSecret: Keys.GoogleClientSecret,
         callbackURL: 'http://localhost:3000/auth/google/callback',
-        // passReqToCallback: true,
     },
     (request, accessToken, refreshToken, profile, done) => {
-    console.log(profile);
         User.findOne({ google: profile.id }, (err, user) => {
             if (err) {
                 return done(err);
@@ -43,10 +38,6 @@ passport.use(new GoogleStrategy({
                 });
             }
         });
-
-        // User.findOrCreate({ googleId: profile.id }, function (err, user) {
-        //     return done(err, user);
-        // });
     },
 ));
 
