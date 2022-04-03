@@ -1,25 +1,27 @@
-{{#each singles}}
-    {{#if online}}
-        <a href="/userProfile/{{_id}}">
-            <div class="row">
-                <div class="col">
-                    <img src="{{image}}" class="rounded-circle" width="64px">
-                    <br>
-                    <i class="fa fa-circle green"> online</i>
+<div class="container-fluid">
+    {{#each singles}}
+        {{#if online}}
+            <a href="/userProfile/{{_id}}">
+                <div class="row">
+                    <div class="col-sm-3">
+                        <img src="{{image}}" class="rounded-circle" width="64px">
+                        <br>
+                        <i class="fa fa-circle green"> online</i>
+                    </div>
                 </div>
-            </div>
-        </a>
+            </a>
+        {{else}}
+            <a href="/userProfile/{{_id}}">
+                <div class="row">
+                    <div class="col-sm-3">
+                        <img src="{{image}}" class="rounded-circle" width="64px">
+                        <br>
+                        <i class="fa fa-circle red"> offline</i>
+                    </div>
+                </div>
+            </a>
+        {{/if}}
     {{else}}
-        <a href="/userProfile/{{_id}}">
-            <div class="row">
-                <div class="col">
-                    <img src="{{image}}" class="rounded-image" width="64px">
-                    <br>
-                    <i class="fa fa-circle red"> offline</i>
-                </div>
-            </div>
-        </a>
-    {{/if}}
-{{else}}
-    <p>No user found</p>
-{{/each}}
+        <p>No user found</p>
+    {{/each}}
+</div>

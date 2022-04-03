@@ -19,3 +19,17 @@
 a:visited {
     color: red;
 }
+
+.col-sm-3 {
+    margin: 5px 5px 5px 5px;
+}
+
+.chatroom-users {
+    width: 64px;
+    height: 64px;
+}
+
+#messages {
+    height: 300px;
+    overflow-y: scroll;
+}

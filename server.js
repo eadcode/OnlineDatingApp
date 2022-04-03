@@ -3,17 +3,20 @@ const mongoose = require('mongoose');
 const passport = require('passport');
 const bcrypt = require('bcryptjs');
 const multer = require('multer');
+const formidable = require('formidable');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const flash = require('connect-flash');
 
-const Handlebars = require('handlebars')
+const Handlebars = require('handlebars');
 const { engine } = require('express-handlebars');
-const {allowInsecurePrototypeAccess} = require('@handlebars/allow-prototype-access')
+const { allowInsecurePrototypeAccess } = require('@handlebars/allow-prototype-access');
 
 const Message = require('./models/message');
 const User = require('./models/user');
+const Chat = require('./models/chat');
 const Keys = require('./config/keys');
+const { getLastMoment } = require('./helpers/moment')
 const { requireLogin, ensureGuest } = require('./helpers/auth');
 
 const app = express();
@@ -54,7 +57,10 @@ require('./passport/local');
 
 app.engine('handlebars', engine({
     defaultLayout: 'main',
-    handlebars: allowInsecurePrototypeAccess(Handlebars)
+    helpers: {
+        getLastMoment: getLastMoment
+    },
+    handlebars: allowInsecurePrototypeAccess(Handlebars),
 }));
 app.set('view engine', 'handlebars');
 app.set('views', './views');
@@ -169,11 +175,11 @@ app.get('/singles', requireLogin, (req, res) => {
     User.find({})
         .sort({ date: 'desc' })
         .then((singles) => {
-            console.log(singles)
+            console.log(singles);
             res.render('singles', {
                 title: 'Singles',
                 singles: singles,
-            })
+            });
         })
         .catch((err) => {
             console.log(err);
@@ -183,12 +189,201 @@ app.get('/singles', requireLogin, (req, res) => {
 app.get('/userProfile/:id', (req, res) => {
     User.findById({ _id: req.params.id })
         .then((user) => {
-        res.render('userProfile', {
-            title: 'Profile',
-            oneUser: user
-        })
-    });
-})
+            res.render('userProfile', {
+                title: 'Profile',
+                oneUser: user,
+            });
+        });
+});
+
+app.get('/startChat/:id', requireLogin, (req, res) => {
+    Chat.findOne({ sender: req.params.id, receiver: req.user._id })
+        .then((chat) => {
+            if (chat) {
+                chat.reveiverRead = true;
+                chat.senderRead = false;
+                chat.date = new Date();
+                chat.save((err, chat) => {
+                    if (err) {
+                        throw err;
+                    }
+
+                    if (chat) {
+                        res.redirect(`/chat/${ chat._id }`);
+                    }
+                });
+            } else {
+                Chat.findOne({ sender: req.user._id, receiver: req.params.id })
+                    .then((chat) => {
+                        if (chat) {
+                            chat.senderRead = true;
+                            chat.reveiverRead = false;
+                            chat.date = new Date();
+                            chat.save((err, chat) => {
+                                if (err) {
+                                    throw err;
+                                }
+
+                                if (chat) {
+                                    res.redirect(`/chat/${ chat._id }`);
+                                }
+                            });
+                        } else {
+                            const newChat = {
+                                sender: req.user._id,
+                                receiver: req.params.id,
+                                senderRead: true,
+                                receiverRead: false,
+                                date: new Date(),
+                            };
+                            new Chat(newChat).save((err, chat) => {
+                                if (err) {
+                                    throw err;
+                                }
+
+                                if (chat) {
+                                    res.redirect(`/chat/${ chat._id }`);
+                                }
+                            });
+                        }
+                    });
+            }
+        });
+});
+
+app.get('/chat/:id', (req, res) => {
+    Chat.findById({ _id: req.params.id })
+        .populate('sender')
+        .populate('receiver')
+        .populate('chats.senderName')
+        .populate('chats.receiverName')
+        .then((chat) => {
+            User.findOne({ _id: req.user._id })
+                .then((user) => {
+                    res.render('chatRoom', {
+                        title: 'Chat',
+                        user: user,
+                        chat: chat,
+                    });
+                });
+        });
+});
+
+app.post('/chat/:id', requireLogin, (req, res) => {
+    Chat.findOne({ _id: req.params.id, sender: req.user._id })
+        .sort({ date: 'desc'})
+        .populate('sender')
+        .populate('receiver')
+        .populate('chats.senderName')
+        .populate('chats.receiverName')
+        .then((chat) => {
+            if (chat) {
+                chat.senderRead = true;
+                chat.reveiverRead = false;
+                chat.date = new Date();
+
+                const newChat = {
+                    senderName: req.user._id,
+                    senderRead: true,
+                    receiverName: chat.receiver._id,
+                    receiverRead: false,
+                    date: new Date(),
+                    senderMessage: req.body.chat,
+                };
+
+                chat.chats.push(newChat);
+                chat.save((err, chat) => {
+                    if (err) {
+                        throw err;
+                    }
+
+                    if (chat) {
+                        Chat.findOne({ _id: chat._id })
+                            .sort({ date: 'desc'})
+                            .populate('sender')
+                            .populate('receiver')
+                            .populate('chats.senderName')
+                            .populate('chats.receiverName')
+                            .then((chat) => {
+                                User.findById({ _id: req.user._id })
+                                    .then((user) => {
+                                        user.wallet = user.wallet - 1;
+                                        user.save((err, user) => {
+                                            if (err) {
+                                                throw err;
+                                            }
+
+                                            if (user) {
+                                                res.render('chatRoom', {
+                                                    title: 'Chat',
+                                                    chat: chat,
+                                                    user: user,
+                                                });
+                                            }
+                                        });
+                                    });
+                            });
+                    }
+                });
+            } else {
+                Chat.findOne({ _id: req.params.id, receiver: req.user._id })
+                    .sort({ date: 'desc'})
+                    .populate('sender')
+                    .populate('receiver')
+                    .populate('chats.senderName')
+                    .populate('chats.receiverName')
+                    .then((chat) => {
+                        chat.senderRead = true;
+                        chat.reveiverRead = false;
+                        chat.date = new Date();
+
+                        const newChat = {
+                            senderName: chat.sender._id,
+                            senderRead: false,
+                            receiverName: req.user._id,
+                            receiverRead: true,
+                            date: new Date(),
+                            receiverMessage: req.body.chat,
+                        };
+
+                        chat.chats.push(newChat);
+                        chat.save((err, chat) => {
+                            if (err) {
+                                throw err;
+                            }
+
+                            if (chat) {
+                                Chat.findOne({ _id: chat._id })
+                                    .sort({ date: 'desc'})
+                                    .populate('sender')
+                                    .populate('receiver')
+                                    .populate('chats.senderName')
+                                    .populate('chats.receiverName')
+                                    .then((chat) => {
+                                        User.findById({ _id: req.user._id })
+                                            .then((user) => {
+                                                user.wallet = user.wallet - 1;
+                                                user.save((err, user) => {
+                                                    if (err) {
+                                                        throw err;
+                                                    }
+
+                                                    if (user) {
+                                                        res.render('chatRoom', {
+                                                            title: 'Chat',
+                                                            chat: chat,
+                                                            user: user,
+                                                        });
+                                                    }
+                                                });
+                                            });
+                                    });
+                            }
+                        });
+                    });
+            }
+        });
+});
 
 app.get('/askToDelete', requireLogin, (req, res) => {
     res.render('askToDelete', {
