@@ -1,7 +1,7 @@
 <div class="container-fluid">
-    {{#each singles}}
-        {{#if online}}
-            <div class="row">
+    <div class="row">
+        {{#each singles}}
+            {{#if online}}
                 <div class="col-sm-3">
                     <img src="{{image}}" class="img-fluid">
                     <br>
@@ -12,13 +12,13 @@
                         <a href="/startChat/{{_id}}">
                             <button class="btn btn-outline-info"><i class="fas fa-comments"></i></button>
                         </a>
-
+                        <a href="/sendSmile/{{_id}}">
+                            <button class="btn btn-outline-danger"><i class="far fa-smile"></i></button>
+                        </a>
                         <i class="fa fa-circle green right"> ONLINE</i>
                     </h4>
                 </div>
-            </div>
-        {{else}}
-            <div class="row">
+            {{else}}
                 <div class="col-sm-3">
                     <img src="{{image}}" class="img-fluid">
                     <br>
@@ -29,13 +29,15 @@
                         <a href="/startChat/{{_id}}">
                             <button class="btn btn-outline-info"><i class="fas fa-comments"></i></button>
                         </a>
-
+                        <a href="/sendSmile/{{_id}}">
+                            <button class="btn btn-outline-danger"><i class="far fa-smile"></i></button>
+                        </a>
                         <i class="fa fa-circle red right"> OFFLINE</i>
                     </h4>
                 </div>
-            </div>
-        {{/if}}
-    {{else}}
-        <p>No user found</p>
-    {{/each}}
+            {{/if}}
+        {{else}}
+            <p>No user found</p>
+        {{/each}}
+    </div>
 </div>

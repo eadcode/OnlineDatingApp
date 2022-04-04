@@ -15,8 +15,9 @@ const { allowInsecurePrototypeAccess } = require('@handlebars/allow-prototype-ac
 const Message = require('./models/message');
 const User = require('./models/user');
 const Chat = require('./models/chat');
+const Smile = require('./models/smile');
 const Keys = require('./config/keys');
-const { getLastMoment } = require('./helpers/moment')
+const { getLastMoment } = require('./helpers/moment');
 const { requireLogin, ensureGuest } = require('./helpers/auth');
 
 const app = express();
@@ -58,7 +59,7 @@ require('./passport/local');
 app.engine('handlebars', engine({
     defaultLayout: 'main',
     helpers: {
-        getLastMoment: getLastMoment
+        getLastMoment: getLastMoment,
     },
     handlebars: allowInsecurePrototypeAccess(Handlebars),
 }));
@@ -138,10 +139,21 @@ app.get('/profile', requireLogin, (req, res) => {
                 if (err) {
                     throw err;
                 } else {
-                    res.render('profile', {
-                        title: 'Profile',
-                        user: user.toObject(),
-                    });
+                    Smile.findOne({ receiver: req.user._id, receiverReceived: false })
+                         .then((newSmile) => {
+                             Chat.findOne({ $or: [
+                                     { receiver: req.user._id, receiverRead: false },
+                                     { sender: req.user._id, senderRead: false }
+                                 ]})
+                                 .then((unread) => {
+                                     res.render('profile', {
+                                         title: 'Profile',
+                                         user: user.toObject(),
+                                         newSmile: newSmile,
+                                         unread: unread
+                                     });
+                                 })
+                         });
                 }
             });
         }
@@ -189,10 +201,14 @@ app.get('/singles', requireLogin, (req, res) => {
 app.get('/userProfile/:id', (req, res) => {
     User.findById({ _id: req.params.id })
         .then((user) => {
-            res.render('userProfile', {
-                title: 'Profile',
-                oneUser: user,
-            });
+            Smile.findOne({ receiver: req.params.id })
+                 .then((smile) => {
+                     res.render('userProfile', {
+                         title: 'Profile',
+                         oneUser: user,
+                         smile: smile,
+                     });
+                 });
         });
 });
 
@@ -271,7 +287,7 @@ app.get('/chat/:id', (req, res) => {
 
 app.post('/chat/:id', requireLogin, (req, res) => {
     Chat.findOne({ _id: req.params.id, sender: req.user._id })
-        .sort({ date: 'desc'})
+        .sort({ date: 'desc' })
         .populate('sender')
         .populate('receiver')
         .populate('chats.senderName')
@@ -299,7 +315,7 @@ app.post('/chat/:id', requireLogin, (req, res) => {
 
                     if (chat) {
                         Chat.findOne({ _id: chat._id })
-                            .sort({ date: 'desc'})
+                            .sort({ date: 'desc' })
                             .populate('sender')
                             .populate('receiver')
                             .populate('chats.senderName')
@@ -327,7 +343,7 @@ app.post('/chat/:id', requireLogin, (req, res) => {
                 });
             } else {
                 Chat.findOne({ _id: req.params.id, receiver: req.user._id })
-                    .sort({ date: 'desc'})
+                    .sort({ date: 'desc' })
                     .populate('sender')
                     .populate('receiver')
                     .populate('chats.senderName')
@@ -354,7 +370,7 @@ app.post('/chat/:id', requireLogin, (req, res) => {
 
                             if (chat) {
                                 Chat.findOne({ _id: chat._id })
-                                    .sort({ date: 'desc'})
+                                    .sort({ date: 'desc' })
                                     .populate('sender')
                                     .populate('receiver')
                                     .populate('chats.senderName')
@@ -383,6 +399,52 @@ app.post('/chat/:id', requireLogin, (req, res) => {
                     });
             }
         });
+});
+
+app.get('/sendSmile/:id', requireLogin, (req, res) => {
+    const newSmile = {
+        sender: req.user._id,
+        receiver: req.params.id,
+        senderSent: true,
+    };
+
+    new Smile(newSmile).save((err, smile) => {
+        if (err) {
+            throw err;
+        }
+
+        if (smile) {
+            res.redirect(`/userProfile/${ req.params.id }`);
+        }
+    });
+});
+
+app.get('/deleteSmile/:id', requireLogin, (req, res) => {
+    Smile.deleteOne({ receiver: req.params.id, sender: req.user._id })
+         .then(() => {
+             res.redirect(`/userProfile/${ req.params.id }`);
+         });
+});
+
+app.get('/showSmile/:id', requireLogin, (req, res) => {
+    Smile.findOne({ _id: req.params.id })
+         .populate('sender')
+         .populate('receiver')
+         .then((smile) => {
+             smile.receiverReceived = true;
+             smile.save((err, smile) => {
+                 if (err) {
+                     throw err;
+                 }
+
+                 if (smile) {
+                     res.render('smile/showSmile', {
+                         title: 'NewSmile',
+                         smile: smile,
+                     });
+                 }
+             });
+         });
 });
 
 app.get('/askToDelete', requireLogin, (req, res) => {
