@@ -16,6 +16,7 @@ const Message = require('./models/message');
 const User = require('./models/user');
 const Chat = require('./models/chat');
 const Smile = require('./models/smile');
+const Post = require('./models/post');
 const Keys = require('./config/keys');
 
 const stripe = require('stripe')(Keys.StripeSecretKey);
@@ -54,7 +55,6 @@ app.use((req, res, next) => {
     res.locals.user = req.user || null;
     next();
 });
-
 
 require('./passport/facebook');
 require('./passport/google');
@@ -152,12 +152,28 @@ app.get('/profile', requireLogin, (req, res) => {
                                  ],
                              })
                                  .then((unread) => {
-                                     res.render('profile', {
-                                         title: 'Profile',
-                                         user: user.toObject(),
-                                         newSmile: newSmile,
-                                         unread: unread,
-                                     });
+                                     Post.find({ postUser: req.user._id })
+                                         .populate('postUser')
+                                         .sort({ date: 'desc' })
+                                         .then((posts) => {
+                                             if (posts) {
+                                                 res.render('profile', {
+                                                     title: 'Profile',
+                                                     user: user.toObject(),
+                                                     newSmile: newSmile,
+                                                     unread: unread,
+                                                     posts: posts,
+                                                 });
+                                             } else {
+                                                 res.render('profile', {
+                                                     title: 'Profile',
+                                                     user: user.toObject(),
+                                                     newSmile: newSmile,
+                                                     unread: unread,
+                                                 });
+                                             }
+                                         });
+
                                  });
                          });
                 }
@@ -582,6 +598,110 @@ app.get('/showSmile/:id', requireLogin, (req, res) => {
              });
          });
 });
+
+app.get('/displayPostForm', requireLogin, (req, res) => {
+    res.render('post/displayPostForm', {
+        title: 'Post',
+    });
+});
+
+app.post('/createPost', requireLogin, (req, res) => {
+    let allowComments = Boolean;
+    if (req.body.allowComments) {
+        allowComments = true;
+    } else {
+        allowComments = false;
+    }
+
+    const newPost = {
+        title: req.body.title,
+        body: req.body.body,
+        status: req.body.status,
+        // image: `url/${req.body.image}`
+        postUser: req.user._id,
+        allowComments: allowComments,
+        date: new Date(),
+    };
+
+    if (req.body.status === 'public') {
+        newPost.icon = 'fas fa-globe'
+    }
+
+    if (req.body.status === 'private') {
+        newPost.icon = 'fas fa-key'
+    }
+
+    if (req.body.status === 'private') {
+        newPost.icon = 'fas fa-user-friends'
+    }
+
+    new Post(newPost)
+        .save()
+        .then(() => {
+            if (req.body.status === 'public') {
+                res.redirect('/posts');
+            } else {
+                res.redirect('/profile')
+            }
+        });
+});
+
+app.get('/posts', requireLogin, (req, res) => {
+    Post.find({ status: 'public' })
+        .populate('postUser')
+        .sort({ date: 'desc' })
+        .then((posts) => {
+            res.render('post/posts', {
+                title: 'Posts',
+                posts: posts,
+            });
+        });
+});
+
+app.get('/deletePost/:id', requireLogin, (req, res) => {
+    Post.deleteOne({ _id: req.params.id })
+        .then(() => {
+            res.redirect('/profile');
+        });
+})
+
+app.get('/editPost/:id', requireLogin, (req, res) => {
+    Post.findById({_id: req.params.id })
+        .then((post) => {
+            res.render('post/editPost', {
+                title: 'Editing Post',
+                post: post
+            })
+        })
+})
+
+app.post('/editPost/:id', requireLogin, (req, res) => {
+    Post.findByIdAndUpdate({ _id: req.params.id })
+        .then((post) => {
+            post.title = req.body.title;
+            post.body = req.body.body;
+            post.status = req.body.status;
+            // post.image = req.body.image;
+            post.date = new Date();
+
+            if (req.body.status === 'public') {
+                newPost.icon = 'fas fa-globe'
+            }
+
+            if (req.body.status === 'private') {
+                newPost.icon = 'fas fa-key'
+            }
+
+            if (req.body.status === 'private') {
+                newPost.icon = 'fas fa-user-friends'
+            }
+
+            post.save()
+                .then(() => {
+                    res.redirect('/profile');
+                })
+        })
+})
 
 app.get('/askToDelete', requireLogin, (req, res) => {
     res.render('askToDelete', {

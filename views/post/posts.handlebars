@@ -1,0 +1,15 @@
+{{#each posts}}
+    <div class="media">
+        <img src="{{postUser.image}}" style="width: 64px">
+        <div class="media-body">
+            <h5 class="mt-0"><i class="fas fa-globe"></i> {{title}}</h5>
+            <p>{{body}}</p>
+            <img src="{{image}}" class="img-fluid">
+            <br>
+            <small>{{getLastMoment date 'hour'}}</small>
+        </div>
+    </div>
+    <hr>
+{{else}}
+    <p>No posts found...</p>
+{{/each}}
