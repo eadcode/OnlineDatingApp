@@ -46,3 +46,11 @@ a:visited {
     margin-top: 60px;
     margin-bottom: 60px;
 }
+
+.payment {
+    background-color: black;
+    color: aliceblue;
+    margin: 5px;
+    padding: 10px;
+    border: 2px solid red;
+}

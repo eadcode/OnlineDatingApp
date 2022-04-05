@@ -8,8 +8,18 @@
 
         {{#if smile}}
             <a href="/deleteSmile/{{oneUser._id}}" class="btn btn-danger">
-                <i class="far fa-smile"></i>
+                <i class="far fa-smile newsmile"></i>
             </a>
+            <script>
+                $(document.ready(function () {
+                    setInterval(function () {
+                        $('.newsmile').attr('style', 'color:green')
+                    }, 10)
+                    setInterval(function () {
+                        $('.newsmile').attr('style', 'color:blue')
+                    }, 30)
+                }))
+            </script>
         {{else}}
         <a href="/sendSmile/{{oneUser._id}}" class="btn btn-outline-danger">
             <i class="far fa-smile"></i>

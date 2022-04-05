@@ -17,6 +17,10 @@ const User = require('./models/user');
 const Chat = require('./models/chat');
 const Smile = require('./models/smile');
 const Keys = require('./config/keys');
+
+const stripe = require('stripe')(Keys.StripeSecretKey);
+
+const { walletChecker } = require('./helpers/wallet');
 const { getLastMoment } = require('./helpers/moment');
 const { requireLogin, ensureGuest } = require('./helpers/auth');
 
@@ -141,18 +145,20 @@ app.get('/profile', requireLogin, (req, res) => {
                 } else {
                     Smile.findOne({ receiver: req.user._id, receiverReceived: false })
                          .then((newSmile) => {
-                             Chat.findOne({ $or: [
+                             Chat.findOne({
+                                 $or: [
                                      { receiver: req.user._id, receiverRead: false },
-                                     { sender: req.user._id, senderRead: false }
-                                 ]})
+                                     { sender: req.user._id, senderRead: false },
+                                 ],
+                             })
                                  .then((unread) => {
                                      res.render('profile', {
                                          title: 'Profile',
                                          user: user.toObject(),
                                          newSmile: newSmile,
-                                         unread: unread
+                                         unread: unread,
                                      });
-                                 })
+                                 });
                          });
                 }
             });
@@ -285,7 +291,7 @@ app.get('/chat/:id', (req, res) => {
         });
 });
 
-app.post('/chat/:id', requireLogin, (req, res) => {
+app.post('/chat/:id', requireLogin, walletChecker, (req, res) => {
     Chat.findOne({ _id: req.params.id, sender: req.user._id })
         .sort({ date: 'desc' })
         .populate('sender')
@@ -402,34 +408,133 @@ app.post('/chat/:id', requireLogin, (req, res) => {
 });
 
 app.get('/chats', requireLogin, (req, res) => {
-   Chat.find({ receiver: req.user._id})
-       .populate('sender')
-       .populate('receiver')
-       .populate('chats.senderName')
-       .populate('chats.receiverName')
-       .sort({ date: 'desc'})
-       .then((received) => {
-           Chat.find({ sender: req.user._id })
-               .populate('sender')
-               .populate('receiver')
-               .populate('chats.senderName')
-               .populate('chats.receiverName')
-               .sort({ date: 'desc'})
-               .then((sent) => {
-                   res.render('chat/chats', {
-                       title: 'Chat History',
-                       received: received,
-                       sent: sent
-                   })
-               })
-       })
+    Chat.find({ receiver: req.user._id })
+        .populate('sender')
+        .populate('receiver')
+        .populate('chats.senderName')
+        .populate('chats.receiverName')
+        .sort({ date: 'desc' })
+        .then((received) => {
+            Chat.find({ sender: req.user._id })
+                .populate('sender')
+                .populate('receiver')
+                .populate('chats.senderName')
+                .populate('chats.receiverName')
+                .sort({ date: 'desc' })
+                .then((sent) => {
+                    res.render('chat/chats', {
+                        title: 'Chat History',
+                        received: received,
+                        sent: sent,
+                    });
+                });
+        });
 });
 
 app.get('/deleteChat/:id', requireLogin, (req, res) => {
-   Chat.deleteOne({ _id: req.params.id })
-       .then(() => {
-           res.redirect('/chats');
-       })
+    Chat.deleteOne({ _id: req.params.id })
+        .then(() => {
+            res.redirect('/chats');
+        });
+});
+
+app.post('/charge10dollars', requireLogin, (req, res) => {
+    const amount = 1000;
+    stripe.customers.create({
+        email: req.body.stripeEmail,
+        source: req.body.stripeToken,
+    }).then((customer) => {
+        stripe.charges.create({
+            amount: amount,
+            description: '$10 for 20 messages',
+            currency: 'usd',
+            customer: customer.id,
+            receipt_email: customer.email,
+        }).then((charge) => {
+            if (charge) {
+                User.findById({ _id: req.user._id })
+                    .then((user) => {
+                        user.wallet += 20;
+                        user.save().then(() => {
+                            res.render('success', {
+                                title: 'Success',
+                                charge: charge,
+                            });
+                        });
+                    });
+            }
+        }).catch((err) => {
+            console.log(err);
+        });
+    }).catch((err) => {
+        console.log(err);
+    });
+});
+
+app.post('/charge20dollars', requireLogin, (req, res) => {
+    const amount = 2000;
+    stripe.customers.create({
+        email: req.body.stripeEmail,
+        source: req.body.stripeToken,
+    }).then((customer) => {
+        stripe.charges.create({
+            amount: amount,
+            description: '$20 for 50 messages',
+            currency: 'usd',
+            customer: customer.id,
+            receipt_email: customer.email,
+        }).then((charge) => {
+            if (charge) {
+                User.findById({ _id: req.user._id })
+                    .then((user) => {
+                        user.wallet += 50;
+                        user.save().then(() => {
+                            res.render('success', {
+                                title: 'Success',
+                                charge: charge,
+                            });
+                        });
+                    });
+            }
+        }).catch((err) => {
+            console.log(err);
+        });
+    }).catch((err) => {
+        console.log(err);
+    });
+});
+
+app.post('/charge30dollars', requireLogin, (req, res) => {
+    const amount = 3000;
+    stripe.customers.create({
+        email: req.body.stripeEmail,
+        source: req.body.stripeToken,
+    }).then((customer) => {
+        stripe.charges.create({
+            amount: amount,
+            description: '$30 for 100 messages',
+            currency: 'usd',
+            customer: customer.id,
+            receipt_email: customer.email,
+        }).then((charge) => {
+            if (charge) {
+                User.findById({ _id: req.user._id })
+                    .then((user) => {
+                        user.wallet += 100;
+                        user.save().then(() => {
+                            res.render('success', {
+                                title: 'Success',
+                                charge: charge,
+                            });
+                        });
+                    });
+            }
+        }).catch((err) => {
+            console.log(err);
+        });
+    }).catch((err) => {
+        console.log(err);
+    });
 });
 
 app.get('/sendSmile/:id', requireLogin, (req, res) => {

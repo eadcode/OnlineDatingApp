@@ -2,7 +2,7 @@
     {{#each received}}
         <div class="media">
             <a href="/startChat/{{sender._id}}">
-                <img src="{{sender.image}}" class="mr-3">
+                <img src="{{sender.image}}" class="mr-3" style="width: 64px">
             </a>
 
             <div class="media-body">
@@ -40,7 +40,7 @@
 {{#each sent}}
     <div class="media">
         <a href="/startChat/{{receiver._id}}">
-            <img src="{{receiver.image}}" class="mr-3">
+            <img src="{{receiver.image}}" class="mr-3" style="width: 64px">
         </a>
 
         <div class="media-body">

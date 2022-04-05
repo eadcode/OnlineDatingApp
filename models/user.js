@@ -48,7 +48,7 @@ const userSchema = new Schema({
     },
     wallet: {
         type: Number,
-        default: 0
+        default: 3
     },
     date: {
         type: Date,
