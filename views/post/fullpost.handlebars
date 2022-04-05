@@ -3,6 +3,24 @@
     <div class="media-body">
         <h5 class="mt-0">{{post.title}}</h5>
         <p>{{post.body}}</p>
+        <br>
+        <small>{{getLastMoment date 'hour'}}</small>
+        <hr>
+
+        {{#each post}}
+            {{#each comments}}
+                <div class="media mt-3">
+                    <a class="mr-3" href="/userProfile/{{commentUser._id}}">
+                        <img src="{{commentUser.image}}" style="width: 64px">
+                    </a>
+                    <div class="media-body">
+                        <p>{{commentBody}}</p>
+                        <br>
+                        <small>{{getLastMoment date 'hour'}}</small>
+                    </div>
+                </div>
+            {{/each}}
+        {{/each}}
 
         {{#each post}}
             {{#each likes}}
@@ -18,5 +36,32 @@
                 </div>
             {{/each}}
         {{/each}}
+        <hr>
+        <br>
+        <h4>
+            <a href="/likePost/{{_id}}"><i class="far fa-thumbs-up post-icons"> Like</i></a>
+        </h4>
+
+        {{#if post.allowComments}}
+            <h4>
+                <button id="comment-btn" type="button" onclick="displayCommentForm()" class="btn btn-primary">
+                    <i class="fa fa-comment"> Comment</i>
+                </button>
+            </h4>
+            <form id="comment-form" action="/leaveComment/{{post._id}}" method="POST" class="form-inline" style="display: none">
+                <div class="form-group mx-sm-2 mg-2">
+                    <input type="text" name="commentBody" class="form-controler" placeholder="Leave comment...">
+                </div>
+                <button type="submit" class="btn btn-sm btn-primary mb-2">
+                    <i class="fa fa-comment"></i>
+                </button>
+            </form>
+        {{/if}}
+        <script>
+            function displayCommentForm() {
+                document.getElementById('comment-btn').style.display = 'none';
+                document.getElementById('comment-form').style.display = 'block';
+            }
+        </script>
     </div>
 </div>
