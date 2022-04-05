@@ -34,6 +34,13 @@
         <h5><i class="fa fa-user"></i> {{oneUser.fullname}}</h5>
         <h5><i class="fa fa-mars"></i> {{oneUser.gender}}</h5>
         <h5><i class="fa fa-id-card"></i> {{oneUser.about}}</h5>
+
+        <br>
+        {{#if oneUser.online}}
+            <i class="fa fa-circle green"> ONLINE</i>
+        {{else}}
+            <i class="fa fa-circle red"> OFFLINE</i>
+        {{/if}}
     </div>
 </div>
 
