@@ -2,11 +2,25 @@
     <div class="media">
         <img src="{{postUser.image}}" style="width: 64px">
         <div class="media-body">
-            <h5 class="mt-0"><i class="fas fa-globe"></i> {{title}}</h5>
+            <h5 class="mt-0"><i class="{{icon}}"></i> {{title}}</h5>
             <p>{{body}}</p>
             <img src="{{image}}" class="img-fluid">
             <br>
             <small>{{getLastMoment date 'hour'}}</small>
+
+            <br>
+            <h4>
+                <a href="/likePost/{{_id}}"><i class="far fa-thumbs-up post-icons"> Like</i></a>
+
+                {{#if allowComments}}
+                    <a href="/leaveComment/{{_id}}"><i class="fa fa-comments"> Comment</i></a>
+                {{else}}
+                    <p class="red">Comment is not allowed</p>
+                {{/if}}
+            </h4>
+
+            <br>
+            <a href="/fullpost/{{_id}}">View more</a>
         </div>
     </div>
     <hr>

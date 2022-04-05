@@ -624,15 +624,15 @@ app.post('/createPost', requireLogin, (req, res) => {
     };
 
     if (req.body.status === 'public') {
-        newPost.icon = 'fas fa-globe'
+        newPost.icon = 'fas fa-globe';
     }
 
     if (req.body.status === 'private') {
-        newPost.icon = 'fas fa-key'
+        newPost.icon = 'fas fa-key';
     }
 
     if (req.body.status === 'private') {
-        newPost.icon = 'fas fa-user-friends'
+        newPost.icon = 'fas fa-user-friends';
     }
 
     new Post(newPost)
@@ -641,7 +641,7 @@ app.post('/createPost', requireLogin, (req, res) => {
             if (req.body.status === 'public') {
                 res.redirect('/posts');
             } else {
-                res.redirect('/profile')
+                res.redirect('/profile');
             }
         });
 });
@@ -663,44 +663,86 @@ app.get('/deletePost/:id', requireLogin, (req, res) => {
         .then(() => {
             res.redirect('/profile');
         });
-})
+});
 
 app.get('/editPost/:id', requireLogin, (req, res) => {
-    Post.findById({_id: req.params.id })
+    Post.findById({ _id: req.params.id })
         .then((post) => {
             res.render('post/editPost', {
                 title: 'Editing Post',
-                post: post
-            })
-        })
-})
+                post: post,
+            });
+        });
+});
 
 app.post('/editPost/:id', requireLogin, (req, res) => {
     Post.findByIdAndUpdate({ _id: req.params.id })
         .then((post) => {
+            let allowComments = Boolean
+            if (req.body.allowComments) {
+                allowComments = true;
+            } else {
+                allowComments = false
+            }
+
             post.title = req.body.title;
             post.body = req.body.body;
             post.status = req.body.status;
+            post.allowComments = allowComments;
             // post.image = req.body.image;
             post.date = new Date();
 
             if (req.body.status === 'public') {
-                newPost.icon = 'fas fa-globe'
+                newPost.icon = 'fas fa-globe';
             }
 
             if (req.body.status === 'private') {
-                newPost.icon = 'fas fa-key'
+                newPost.icon = 'fas fa-key';
             }
 
             if (req.body.status === 'private') {
-                newPost.icon = 'fas fa-user-friends'
+                newPost.icon = 'fas fa-user-friends';
             }
 
             post.save()
                 .then(() => {
                     res.redirect('/profile');
-                })
-        })
+                });
+        });
+});
+
+app.get('/likePost/:id', requireLogin, (req, res) => {
+    Post.findById({ _id: req.params.id })
+        .then((post) => {
+            const newLike = {
+                likeUser: req.user._id,
+                date: new Date()
+            }
+
+            post.likes.push(newLike)
+            post.save((err, post) => {
+                if (err) {
+                    throw err;
+                }
+
+                if (post) {
+                    res.redirect(`/fullPost/${post._id}`);
+                }
+            })
+        });
+})
+
+app.get('/fullPost/:id', requireLogin, (req, res) => {
+    Post.findById({ _id: req.params.id })
+        .populate('postUser')
+        .populate('likes.likeUser')
+        .sort({ date: 'desc' })
+        .then((post) => {
+            res.render('post/fullpost', {
+                title: 'Full Post',
+                post: post
+            })
+        });
 })
 
 app.get('/askToDelete', requireLogin, (req, res) => {

@@ -1,0 +1,22 @@
+<div class="media">
+    <img src="{{post.postUser.image}}" class="mr-3" style="width: 64px">
+    <div class="media-body">
+        <h5 class="mt-0">{{post.title}}</h5>
+        <p>{{post.body}}</p>
+
+        {{#each post}}
+            {{#each likes}}
+                <div class="media mt-3">
+                    <a class="mr-3" href="#">
+                        <img src="{{likeUser.image}}" style="width: 64px">
+                    </a>
+                    <div class="media-body">
+                        <h5 class="mt-0"><i class="far fa-thumbs-up"></i></h5>
+                        <br>
+                        <small>{{getLastMoment date 'hour'}}</small>
+                    </div>
+                </div>
+            {{/each}}
+        {{/each}}
+    </div>
+</div>
