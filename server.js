@@ -865,6 +865,44 @@ app.get('/loginErrors', (req, res) => {
     });
 });
 
+app.get('/retrievePassword', (req, res) => {
+    res.render('retrievePassword', {
+        title: 'Retrieve Password'
+    })
+});
+
+app.post('/retrievePassword', (req, res) => {
+    let email = req.body.email.trim();
+    let pwd1 = req.body.password.trim();
+    let pwd2 = req.body.password2.trim();
+
+    if (pwd1 !== pwd2) {
+        res.render('passwordNotMatch', {
+            title: 'Not match'
+        })
+    }
+
+    User.findOne({ email: email})
+        .then((user) => {
+            const salt = bcrypt.genSaltSync(10);
+            const hash = bcrypt.hashSync(pwd1, salt);
+
+            user.password = hash
+
+            user.save((err, user) => {
+                if (err) {
+                    throw err;
+                }
+
+                if (user) {
+                    res.render('passwordUpdated', {
+                        title: 'Updated'
+                    })
+                }
+            })
+        })
+});
+
 app.get('/logout', (req, res) => {
     User.findById({ _id: req.user._id }).then((user) => {
         user.online = false;
