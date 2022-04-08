@@ -1,0 +1,12 @@
+<h2 class="center">
+    You have a friend request from
+</h2>
+
+<div class="card" style="width: 18rem;">
+    <img src="{{userRequest.image}}" class="card-img-top" width="64px">
+    <div class="card-body">
+        <h5 class="card-title">{{userRequest.fullname}}</h5>
+        <a href="/acceptFriend/{{userRequest._id}}" class="btn btn-primary">Accept</a>
+        <a href="/rejectFriend/{{userRequest._id}}" class="btn btn-danger">Reject</a>
+    </div>
+</div>

@@ -3,7 +3,7 @@
         {{#each singles}}
             {{#if online}}
                 <div class="col-sm-3">
-                    <img src="{{image}}" class="img-fluid">
+                    <img src="{{image}}" class="img-fluid" width="64px">
                     <br>
                     <h4 class="singles-icons">
                         <a href="/userProfile/{{_id}}">
@@ -15,12 +15,15 @@
                         <a href="/sendSmile/{{_id}}">
                             <button class="btn btn-outline-danger"><i class="far fa-smile"></i></button>
                         </a>
-                        <i class="fa fa-circle green right"> ONLINE</i>
+                        <a href="/sendFriendRequest/{{_id}}">
+                            <button class="btn btn-outline-success"><i class="fas fa-user-plus"></i></button>
+                        </a>
+                        <h6><i class="fa fa-circle green"> ONLINE</i></h6>
                     </h4>
                 </div>
             {{else}}
                 <div class="col-sm-3">
-                    <img src="{{image}}" class="img-fluid">
+                    <img src="{{image}}" class="img-fluid" width="64px">
                     <br>
                     <h4 class="singles-icons">
                         <a href="/userProfile/{{_id}}">
@@ -32,7 +35,10 @@
                         <a href="/sendSmile/{{_id}}">
                             <button class="btn btn-outline-danger"><i class="far fa-smile"></i></button>
                         </a>
-                        <i class="fa fa-circle red right"> OFFLINE</i>
+                        <a href="/sendFriendRequest/{{_id}}">
+                            <button class="btn btn-outline-success"><i class="fas fa-user-plus"></i></button>
+                        </a>
+                        <h6><i class="fa fa-circle red"> OFFLINE</i></h6>
                     </h4>
                 </div>
             {{/if}}

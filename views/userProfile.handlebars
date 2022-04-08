@@ -1,7 +1,7 @@
 <div class="row">
     <div class="col-sm-5">
         <div class="card" style="width: 18rem;">
-            <img src="{{oneUser.image}}" class="card-img-top">
+            <img src="{{oneUser.image}}" class="card-img-top" width="64px">
             <div class="card-body">
                 <a href="/startChat/{{oneUser._id}}" class="btn btn-primary">
                     <i class="fas fa-comments"></i>
@@ -26,6 +26,10 @@
                         <i class="far fa-smile"></i>
                     </a>
                 {{/if}}
+
+                <a href="/sendFriendRequest/{{oneUser._id}}">
+                    <button class="btn btn-outline-success"><i class="fas fa-user-plus"></i></button>
+                </a>
             </div>
         </div>
     </div>
@@ -43,6 +47,20 @@
         {{/if}}
     </div>
 </div>
+
+<hr>
+<h2 class="center">Friends</h2>
+{{#each oneUser.friends}}
+    <div class="col-sm-3">
+        <div class="card" style="width: 18rem;">
+            <img src="{{friend.image}}" class="card-img-top img-fluid" width="64px">
+            <div class="card-body">
+                <h5 class="card-title">{{friend.fullname}}</h5>
+                <a href="/userProfile{{friend._id}}" class="btn btn-primary">View Profile</a>
+            </div>
+        </div>
+    </div>
+{{/each}}
 
 <hr>
 <div class="container">

@@ -72,7 +72,7 @@ app.set('views', './views');
 
 app.get('/', ensureGuest, (req, res) => {
     res.render('home', {
-        title: 'Home',
+        title: 'Welcome',
     });
 });
 
@@ -136,7 +136,9 @@ app.get('/auth/google/callback', passport.authenticate('google', {
 }));
 
 app.get('/profile', requireLogin, (req, res) => {
-    User.findById({ _id: req.user._id }).then((user) => {
+    User.findById({ _id: req.user._id })
+        .populate('friends.friend')
+        .then((user) => {
         if (user) {
             user.online = true;
             user.save((err, user) => {
@@ -222,10 +224,11 @@ app.get('/singles', requireLogin, (req, res) => {
 
 app.get('/userProfile/:id', requireLogin, (req, res) => {
     User.findById({ _id: req.params.id })
+        .populate('friends.friend')
         .then((user) => {
             Smile.findOne({ receiver: req.params.id })
                  .then((smile) => {
-                     Post.find({ status: 'public', postUser: user._id})
+                     Post.find({ status: 'public', postUser: user._id })
                          .populate('postUser')
                          .populate('comments.commentUser')
                          .populate('likes.likeUser')
@@ -234,9 +237,9 @@ app.get('/userProfile/:id', requireLogin, (req, res) => {
                                  title: 'Profile',
                                  oneUser: user,
                                  smile: smile,
-                                 publicPosts: publicPosts
+                                 publicPosts: publicPosts,
                              });
-                         })
+                         });
                  });
         });
 });
@@ -685,11 +688,11 @@ app.get('/editPost/:id', requireLogin, (req, res) => {
 app.post('/editPost/:id', requireLogin, (req, res) => {
     Post.findByIdAndUpdate({ _id: req.params.id })
         .then((post) => {
-            let allowComments = Boolean
+            let allowComments = Boolean;
             if (req.body.allowComments) {
                 allowComments = true;
             } else {
-                allowComments = false
+                allowComments = false;
             }
 
             post.title = req.body.title;
@@ -723,21 +726,21 @@ app.get('/likePost/:id', requireLogin, (req, res) => {
         .then((post) => {
             const newLike = {
                 likeUser: req.user._id,
-                date: new Date()
-            }
+                date: new Date(),
+            };
 
-            post.likes.push(newLike)
+            post.likes.push(newLike);
             post.save((err, post) => {
                 if (err) {
                     throw err;
                 }
 
                 if (post) {
-                    res.redirect(`/fullPost/${post._id}`);
+                    res.redirect(`/fullPost/${ post._id }`);
                 }
-            })
+            });
         });
-})
+});
 
 app.get('/fullPost/:id', requireLogin, (req, res) => {
     Post.findById({ _id: req.params.id })
@@ -748,10 +751,10 @@ app.get('/fullPost/:id', requireLogin, (req, res) => {
         .then((post) => {
             res.render('post/fullpost', {
                 title: 'Full Post',
-                post: post
-            })
+                post: post,
+            });
         });
-})
+});
 
 app.post('/leaveComment/:id', requireLogin, (req, res) => {
     Post.findById({ _id: req.params.id })
@@ -759,8 +762,8 @@ app.post('/leaveComment/:id', requireLogin, (req, res) => {
             const newComment = {
                 commentUser: req.user._id,
                 commentBody: req.body.commentBody,
-                date: new Date()
-            }
+                date: new Date(),
+            };
 
             post.comments.push(newComment);
             post.save((err, post) => {
@@ -769,11 +772,124 @@ app.post('/leaveComment/:id', requireLogin, (req, res) => {
                 }
 
                 if (post) {
-                    res.redirect(`/fullpost/${post._id}`)
+                    res.redirect(`/fullpost/${ post._id }`);
                 }
-            })
+            });
         });
-})
+});
+
+app.get('/sendFriendRequest/:id', requireLogin, (req, res) => {
+    User.findOne({ _id: req.params.id })
+        .then((user) => {
+            const newFriendRequest = {
+                friend: req.user._id,
+            };
+
+            user.friends.push(newFriendRequest);
+            user.save((err, user) => {
+                if (err) {
+                    throw err;
+                }
+
+                if (user) {
+                    res.render('friends/askFriendRequest', {
+                        title: 'Friend Request',
+                        newFriend: user,
+                    });
+                }
+            });
+        });
+});
+
+app.get('/showFriendRequest/:id', requireLogin, (req, res) => {
+    User.findOne({ _id: req.params.id })
+        .then((userRequest) => {
+            res.render('friends/showFriendRequest', {
+                title: 'User Request',
+                userRequest: userRequest,
+            });
+        });
+});
+
+app.get('/acceptFriend/:id', requireLogin, (req, res) => {
+    User.findById({ _id: req.user._id })
+        .populate('friends.friend')
+        .then((user) => {
+            user.friends.filter((friend) => {
+                if (friend._id = req.params.id) {
+                    friend.isFriend = true;
+                    user.save()
+                        .then(() => {
+                            User.findById({ _id: req.params.id })
+                                .then((requestSender) => {
+                                    const newFriend = {
+                                        friend: req.user._id,
+                                        isFriend: true,
+                                    };
+
+                                    requestSender.friends.push(newFriend);
+                                    requestSender
+                                        .save()
+                                        .then(() => {
+                                            User.findById({ _id: req.user._id })
+                                                .populate('friends.friend')
+                                                .sort({ date: 'desc' })
+                                                .then((user) => {
+                                                    res.render('friends/friendAccepted', {
+                                                        title: 'Friends',
+                                                        userInfo: user,
+                                                    });
+                                                });
+                                        });
+                                });
+                        });
+                } else {
+                    res.render('friends/404', {
+                        title: 'Not found',
+                    });
+                }
+            });
+        }).catch(err => {
+        console.log(err);
+    });
+});
+
+app.get('/rejectFriend/:id', requireLogin, (req, res) => {
+    User.findById({ _id: req.user._id })
+        .populate('friends.friend')
+        .then((user) => {
+            user.friends.filter((friend) => {
+                if (friend._id = req.params.id) {
+                    user.friends.pop(friend);
+                    user.save()
+                        .then(() => {
+                            User.findOne({ _id: req.params.id })
+                                .then((friend) => {
+                                    res.render('friends/friendRejected', {
+                                        title: 'Friends',
+                                        friend: friend,
+                                    });
+                                });
+                        });
+                } else {
+                    res.render('friends/404', {
+                        title: 'Not found',
+                    });
+                }
+            });
+        });
+});
+
+app.get('/friends', requireLogin, (req, res) => {
+    User.findById({ _id: req.user._id })
+        .populate('friends.friend')
+        .then((user) => {
+            res.render('friends/allFriends', {
+                title: 'Friends',
+                userFriends: user,
+            });
+        });
+});
 
 app.get('/askToDelete', requireLogin, (req, res) => {
     res.render('askToDelete', {
@@ -867,8 +983,8 @@ app.get('/loginErrors', (req, res) => {
 
 app.get('/retrievePassword', (req, res) => {
     res.render('retrievePassword', {
-        title: 'Retrieve Password'
-    })
+        title: 'Retrieve Password',
+    });
 });
 
 app.post('/retrievePassword', (req, res) => {
@@ -878,16 +994,16 @@ app.post('/retrievePassword', (req, res) => {
 
     if (pwd1 !== pwd2) {
         res.render('passwordNotMatch', {
-            title: 'Not match'
-        })
+            title: 'Not match',
+        });
     }
 
-    User.findOne({ email: email})
+    User.findOne({ email: email })
         .then((user) => {
             const salt = bcrypt.genSaltSync(10);
             const hash = bcrypt.hashSync(pwd1, salt);
 
-            user.password = hash
+            user.password = hash;
 
             user.save((err, user) => {
                 if (err) {
@@ -896,11 +1012,11 @@ app.post('/retrievePassword', (req, res) => {
 
                 if (user) {
                     res.render('passwordUpdated', {
-                        title: 'Updated'
-                    })
+                        title: 'Updated',
+                    });
                 }
-            })
-        })
+            });
+        });
 });
 
 app.get('/logout', (req, res) => {
